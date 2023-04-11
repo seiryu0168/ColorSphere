@@ -17,7 +17,7 @@ VS_OUT VS( float4 pos : POSITION )// : SV_POSITION
 	return outData;
 }
 
-float4 PS(VS_OUT inData):SV_Target
+float4 PS(VS_OUT inData) :SV_Target
 {
-	return float4(inData.color,1);
+	return float4(0,0,0,1);// float4(inData.color,1);
 }

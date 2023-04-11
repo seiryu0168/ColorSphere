@@ -173,7 +173,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, 
 			}
 
 			//¡‚ÌŽž‚ÆÅŒã‚ÉXV‚µ‚½Žž‚Ì·*60‚ª1000ˆÈã‚Å‚ ‚ê‚Î
-			if ((nowTime - lastUpdateTime) * 60.0f >= 1000.0f)
+			if ((nowTime - lastUpdateTime) *60.0f >= 1000.0f)
 			{
 #ifdef _DEBUG
 				DebugUI::StartImGui();

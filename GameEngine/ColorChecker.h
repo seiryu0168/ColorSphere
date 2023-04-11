@@ -21,7 +21,17 @@ private:
 	int imageHeight_;
 	Transform transform;
 
+	D3D11_SAMPLER_DESC  SamDesc;
+	D3D11_TEXTURE2D_DESC texDesc;
+	D3D11_SHADER_RESOURCE_VIEW_DESC smplSRVDesc;
+	D3D11_BUFFER_DESC UAVBufferDesc;
+	D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
+
 	//シェーダー関連の変数
+	ID3D11ShaderResourceView* smplSRV_;
+	ID3D11UnorderedAccessView* UAV_;
+	ID3D11Buffer* outBuff_;
+	ID3D11Buffer* pOutputBuffer_;
 	ID3D11Buffer* pSampleBuffer_;
 	ID3D11Buffer* pResultBuffer_;
 	ID3D11UnorderedAccessView* pResltUAV_;
@@ -47,6 +57,8 @@ private:
 	ID3D11SamplerState* pSampler_;
 	ID3D11ShaderResourceView* pSRV_;
 	ID3D11Texture2D* pSampleImage_;
+
+	D3D11_VIEWPORT vp;
 	HRESULT InitComputeShader(LPCWSTR fileName,LPCSTR entryPoint, ID3D11Device* device,ID3DBlob** blob);
 	HRESULT InitVertexShader(LPCWSTR fileName, LPCSTR entryPoint, ID3D11Device* device, ID3DBlob** blob);
 	HRESULT InitGeometryShader(LPCWSTR fileName, LPCSTR entryPoint, ID3D11Device* device, ID3DBlob** blob);
@@ -61,6 +73,9 @@ public:
 	void SetSampleBuffer(ID3D11Texture2D* buff);
 	void ShaderDispatch(int imageWidth, int imageHeight);
 	void GetShaderResult(ID3D11Buffer* resultBuffer);
+	void CreateUAV(ID3D11UnorderedAccessView* uav, ID3D11Buffer* buff);
+	void CreateSRV(ID3D11ShaderResourceView* srv, ID3D11Resource* rsource);
+
 	void CalcPixel(ID3D11Texture2D* buff);
 	void Update();
 	void DrawStart();
