@@ -1,6 +1,6 @@
 cbuffer global
 {
-	float4x4 g_matWVP;
+	float4x4 g_matWVP;//ワールド、ビュー、プロジェクション
 };
 
 struct VS_OUT

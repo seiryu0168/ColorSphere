@@ -19,6 +19,7 @@ private:
 
 	int imageWidth_;
 	int imageHeight_;
+	float R;
 	Transform transform;
 
 	D3D11_SAMPLER_DESC  SamDesc;
@@ -28,13 +29,12 @@ private:
 	D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 
 	//シェーダー関連の変数
-	ID3D11ShaderResourceView* smplSRV_;
-	ID3D11UnorderedAccessView* UAV_;
-	ID3D11Buffer* outBuff_;
-	ID3D11Buffer* pOutputBuffer_;
-	ID3D11Buffer* pSampleBuffer_;
-	ID3D11Buffer* pResultBuffer_;
-	ID3D11UnorderedAccessView* pResltUAV_;
+	ID3D11ShaderResourceView* smplSRV_;//シェーダーリソースビュー
+	ID3D11UnorderedAccessView* UAV_; //シェーダーからの出力を受け取る奴(UAV:UnorderedAccessView)
+	ID3D11Buffer* outBuff_;//UAVの情報を受け取る
+	ID3D11Buffer* pOutputBuffer_;//シェーダーからの出力を受け取る奴を用意するためのバッファ
+	ID3D11Buffer* pSampleBuffer_;//
+	ID3D11Buffer* pResultBuffer_;//
 
 	ID3D11ComputeShader* pComputeShader;
 	ID3D11VertexShader* pVertexShader_;
