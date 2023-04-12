@@ -1,5 +1,6 @@
 #include<d3dcompiler.h>
 #include "ColorChecker.h"
+#include"Engine/ResourceManager/Model.h"
 #include"Engine/GameObject/Camera.h"
 #include"Engine/DirectX_11/Input.h"
 
@@ -14,8 +15,8 @@ ColorChecker::~ColorChecker()
 }
 void ColorChecker::Initialize(int screenWidth, int screenHeight, HWND hWnd)
 {
-	dispatchX_ = 16;
-	dispatchY_ = 16;
+	hModel_ = ModelManager::Load("Assets\\Block.fbx");
+	assert(hModel_ >= 0);
 	imageWidth_ = Direct3D::GetScreenWidth();
 	imageHeight_ = Direct3D::GetScreenHeight();
 	HRESULT hr;
@@ -65,18 +66,30 @@ void ColorChecker::Initialize(int screenWidth, int screenHeight, HWND hWnd)
 	hr=InitShader();
 	if (FAILED(hr))
 	{
-		MessageBox(nullptr, L"コンピュートシェーダーのコンパイルに失敗", L"エラー", MB_OK);
+		MessageBox(nullptr, L"シェーダーのコンパイル失敗", L"エラー", MB_OK);
 	}
-
-	D3D11_BUFFER_DESC cBufferDesc;
-	cBufferDesc.ByteWidth = sizeof(CONSTANT_BUFFER);
-	cBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	cBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	cBufferDesc.MiscFlags = 0;
-	cBufferDesc.StructureByteStride = 0;
-	hr = Direct3D::GetDevice()->CreateBuffer(&cBufferDesc, nullptr, &pConstantBuffer_);	
-
+	/////////////////////コンスタントバッファ///////////////////
+	{
+		D3D11_BUFFER_DESC cBufferDesc;
+		cBufferDesc.ByteWidth = sizeof(CONSTANT_BUFFER);
+		cBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+		cBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		cBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		cBufferDesc.MiscFlags = 0;
+		cBufferDesc.StructureByteStride = 0;
+		hr = Direct3D::GetDevice()->CreateBuffer(&cBufferDesc, nullptr, &pConstantBuffer_);
+	}
+	////////////////////コンピュートシェーダ用のコンスタントバッファ//////////////
+	{
+		D3D11_BUFFER_DESC cBufferDesc;
+		cBufferDesc.ByteWidth = sizeof(CONSTANT_BUFFER);
+		cBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+		cBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		cBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		cBufferDesc.MiscFlags = 0;
+		cBufferDesc.StructureByteStride = 0;
+		hr = Direct3D::GetDevice()->CreateBuffer(&cBufferDesc, nullptr, &pConputeConstantBuffer_);
+	}
 	////////////////////////テクスチャデスク/////////////////////
 	texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	texDesc.Width = imageWidth_;
@@ -85,7 +98,7 @@ void ColorChecker::Initialize(int screenWidth, int screenHeight, HWND hWnd)
 	texDesc.ArraySize = 1;
 	texDesc.SampleDesc.Count = 1;
 	texDesc.SampleDesc.Quality = 0;
-	texDesc.Usage = D3D11_USAGE_DEFAULT;
+	texDesc.Usage = D3D11_USAGE_DYNAMIC;
 	texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	texDesc.MiscFlags = 0;
@@ -141,11 +154,14 @@ void ColorChecker::Initialize(int screenWidth, int screenHeight, HWND hWnd)
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
 	
-
-	if (FAILED(hr))
-	{
-		MessageBox(nullptr, L"シェーダーのコンパイル失敗", L"エラー", MB_OK);
-	}
+	////コンピュートシェーダ用コンスタントバッファにデータ入れる////
+	CONPUTE_C_BUFFER ccBuf;
+	ccBuf.dispatch = dispatch;
+	ccBuf.uv = { 0,0 };
+	D3D11_MAPPED_SUBRESOURCE subResource;
+	Direct3D::GetContext()->Map(pConputeConstantBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &subResource);
+	memcpy_s(subResource.pData, subResource.RowPitch, (void*)(&ccBuf), sizeof(ccBuf));
+	Direct3D::GetContext()->Unmap(pConputeConstantBuffer_, 0);
 }
 
 void ColorChecker::SetSampleBuffer(ID3D11Texture2D* buff)
@@ -155,7 +171,7 @@ void ColorChecker::SetSampleBuffer(ID3D11Texture2D* buff)
 
 void ColorChecker::ShaderDispatch(int imageWidth, int imageHeight)
 {
-	Direct3D::GetContext()->Dispatch((float)imageWidth / (float)dispatchX_, (float)imageHeight / (float)dispatchY_,1);
+	Direct3D::GetContext()->Dispatch((float)dispatch.x,(float)dispatch.y,1);
 }
 
 void ColorChecker::GetShaderResult(ID3D11Buffer* resultBuffer)
@@ -190,13 +206,35 @@ void ColorChecker::CalcPixel(ID3D11Texture2D* buff)
 	
 	//受け取ったバッファをテクスチャ化
 	Direct3D::GetContext()->CopyResource(pSampleImage_, buff);
+	D3D11_MAPPED_SUBRESOURCE mappedTex;
+	Direct3D::GetContext()->Map(pSampleImage_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedTex);
+	UINT* screen = (UINT*)mappedTex.pData;
 	
+	for (int i = 0; i < imageWidth_; i++)
+	{
+		UINT row = i * mappedTex.RowPitch;
+		for (int j = 0; j < imageHeight_; j++)
+		{
+			UINT col = j * 4;
+			screen[row + col + 0] = 255;
+			screen[row + col + 1] = 255;
+			screen[row + col + 2] = 255;
+			screen[row + col + 3] = 255;
+	
+		}
+	
+	}
+	
+	Direct3D::GetContext()->CopyResource(buff,pSampleImage_);
+	Direct3D::GetContext()->Unmap(pSampleImage_, 0);
 	//////////////////シェーダーに設定するところ///////////////////////
 
 	//シェーダーリソースビュー設定
 	Direct3D::GetContext()->CSSetShaderResources(0, 1, &smplSRV_);
 	//サンプラー設定
 	Direct3D::GetContext()->CSSetSamplers(0, 1, &smplSampler);
+	//コンスタントバッファ設定
+	Direct3D::GetContext()->CSSetConstantBuffers(0, 1, &pConputeConstantBuffer_);
 	//作成したコンピュートシェーダを設定
 	Direct3D::GetContext()->CSSetShader(pComputeShader, nullptr, 0);
 	//UAVを設定
@@ -228,7 +266,7 @@ void ColorChecker::CalcPixel(ID3D11Texture2D* buff)
 	D3D11_SUBRESOURCE_DATA vData;
 	vData.pSysMem = pPixelData_;
 
-	Direct3D::GetDevice()->CreateBuffer(&vDesc, &vData, &pVertexBuffer_);
+	hr=Direct3D::GetDevice()->CreateBuffer(&vDesc, &vData, &pVertexBuffer_);
 	
 	SAFE_RELEASE(smplSampler);
 }
@@ -522,7 +560,6 @@ HRESULT ColorChecker::InitShader()
 
 	SAFE_RELEASE(psBlob);
 	SAFE_RELEASE(vsBlob);
-	//SAFE_RELEASE(gsBlob);
 	SAFE_RELEASE(csBlob);
 	return hr;
 }
@@ -559,16 +596,23 @@ void ColorChecker::DrawStart()
 
 void ColorChecker::Draw()
 {
+	//シェーダー変更
 	Direct3D::GetContext()->VSSetShader(pVertexShader_, NULL, 0);
 	Direct3D::GetContext()->PSSetShader(pPixelShader_, NULL, 0);
 	Direct3D::GetContext()->IASetInputLayout(pLayout_);
 	Direct3D::GetContext()->RSSetState(pRasterizer_);
 
+	
+
+
+	
+	//行列
 	XMMATRIX matW = transform.GetLocalScaleMatrix() * Camera::GetBillBoardMatrix() * transform.GetWorldTranslateMatrix();
 	CONSTANT_BUFFER cBuffer;
 	cBuffer.matWVP = XMMatrixTranspose(transform.GetWorldMatrix() *
 									   Camera::GetViewMatrix() *
 									   Camera::GetProjectionMatrix());
+
 	
 	D3D11_MAPPED_SUBRESOURCE subResource;
 	Direct3D::GetContext()->Map(pConstantBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &subResource);
@@ -577,10 +621,11 @@ void ColorChecker::Draw()
 	UINT stride = sizeof(IMAGE_DATA);
 	UINT offset = 0;
 	
+	ModelManager::SetTransform(hModel_, transform);
+	ModelManager::Draw(hModel_);
 	
 	Direct3D::GetContext()->IASetVertexBuffers(0, 1, &pVertexBuffer_, &stride, &offset);
 	Direct3D::GetContext()->VSSetConstantBuffers(0, 1, &pConstantBuffer_);
-	//Direct3D::GetContext()->GSSetConstantBuffers(0, 1, &pConstantBuffer_);
 	Direct3D::GetContext()->PSSetConstantBuffers(0, 1, &pConstantBuffer_);
 	//Direct3D::GetContext()->UpdateSubresource(pConstantBuffer_, 0, nullptr, &cBuffer, 0, 0);
 	

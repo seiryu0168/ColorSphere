@@ -14,6 +14,14 @@ private:
 		XMMATRIX matWVP;
 		XMMATRIX matNormal;
 	};
+	struct CONPUTE_C_BUFFER
+	{
+		XMFLOAT2 dispatch;
+		XMFLOAT2 uv;
+	};
+		XMFLOAT2 dispatch;
+	
+	int hModel_;
 	int dispatchX_;
 	int dispatchY_;
 
@@ -45,6 +53,7 @@ private:
 	
 	//シェーダーに入れる情報の変数
 	ID3D11Buffer* pConstantBuffer_;
+	ID3D11Buffer* pConputeConstantBuffer_;
 	ID3D11Buffer* pVertexBuffer_;
 	IMAGE_DATA* pPixelData_;
 
