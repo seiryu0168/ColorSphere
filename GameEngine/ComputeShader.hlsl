@@ -17,7 +17,7 @@ SamplerState g_Sampler : register(s0);
 //output
 RWStructuredBuffer<output>outBuffer : register(u0);
 
-[numthreads(1,1,1)]
+[numthreads(16,16,1)]
 void CS( uint2 DTid : SV_DispatchThreadID,uint3 GTid : SV_GroupThreadID,uint3 Gid : SV_GroupID)
 {
 	float groupX = (1.0f / c_dispatch.x);
@@ -25,7 +25,7 @@ void CS( uint2 DTid : SV_DispatchThreadID,uint3 GTid : SV_GroupThreadID,uint3 Gi
 	float2 uv = c_uv;
 	uv.x += groupX * Gid.x + (groupX / 16) * GTid.x;
 	uv.y += groupY * Gid.y + (groupY / 16) * GTid.y;
-	float3 pixelColor = g_Texture[uv];// float3(index.x, index.y, 10);
+	float3 pixelColor = g_Texture[DTid];// float3(index.x, index.y, 10);
 	outBuffer[DTid.x].color = pixelColor;
 	//outBuffer[index].r = pixelColor.x;
 	//outBuffer[index].g = pixelColor.y;

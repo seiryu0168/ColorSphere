@@ -171,7 +171,7 @@ void ColorChecker::SetSampleBuffer(ID3D11Texture2D* buff)
 
 void ColorChecker::ShaderDispatch(int imageWidth, int imageHeight)
 {
-	Direct3D::GetContext()->Dispatch((float)dispatch.x, (float)dispatch.y, 1);
+	Direct3D::GetContext()->Dispatch(imageWidth/(float)dispatch.x, imageHeight/(float)dispatch.y, 1);
 }
 
 void ColorChecker::GetShaderResult(ID3D11Buffer* resultBuffer)
@@ -206,27 +206,29 @@ void ColorChecker::CalcPixel(ID3D11Texture2D* buff)
 
 	//受け取ったバッファをテクスチャ化
 	Direct3D::GetContext()->CopyResource(pSampleImage_, buff);
-	D3D11_MAPPED_SUBRESOURCE mappedTex;
-	Direct3D::GetContext()->Map(pSampleImage_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedTex);
-	UINT* screen = (UINT*)mappedTex.pData;
+	//D3D11_MAPPED_SUBRESOURCE mappedTex;
+	//Direct3D::GetContext()->Map(pSampleImage_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedTex);
+	//UINT* screen = (UINT*)mappedTex.pData;
 
-	for (int i = 0; i < imageWidth_; i++)
-	{
-		UINT row = i * mappedTex.RowPitch;
-		for (int j = 0; j < imageHeight_; j++)
-		{
-			UINT col = j * 4;
-			screen[row + col + 0] = 255;
-			screen[row + col + 1] = 255;
-			screen[row + col + 2] = 255;
-			screen[row + col + 3] = 255;
+	//for (int i = 0; i < imageWidth_; i++)
+	//{
+	//	UINT row = i * mappedTex.RowPitch;
+	//	for (int j = 0; j < imageHeight_; j++)
+	//	{
+	//		UINT col = j * 4;
+	//		screen[row + col + 0] = 255;
+	//		screen[row + col + 1] = 255;
+	//		screen[row + col + 2] = 255;
+	//		screen[row + col + 3] = 255;
+	//
+	//	}
+	//
+	//}
 
-		}
+	//Direct3D::GetContext()->CopyResource(buff, pSampleImage_);
+	//Direct3D::GetContext()->Unmap(pSampleImage_, 0);
 
-	}
 
-	Direct3D::GetContext()->CopyResource(buff, pSampleImage_);
-	Direct3D::GetContext()->Unmap(pSampleImage_, 0);
 	//////////////////シェーダーに設定するところ///////////////////////
 
 	//シェーダーリソースビュー設定
