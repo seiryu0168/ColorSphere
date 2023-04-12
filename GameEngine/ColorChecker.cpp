@@ -11,6 +11,7 @@ ColorChecker::ColorChecker()
 
 ColorChecker::~ColorChecker()
 {
+	Release();
 }
 void ColorChecker::Initialize(int screenWidth, int screenHeight, HWND hWnd)
 {
@@ -40,29 +41,29 @@ void ColorChecker::Initialize(int screenWidth, int screenHeight, HWND hWnd)
 	scDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;	//バックバッファの使い道＝画面に描画するために
 	scDesc.SampleDesc.Count = 1;		//MSAA（アンチエイリアス）の設定
 	scDesc.SampleDesc.Quality = 0;		//　〃
-	
+
 	//スワップチェイン作成
-	hr=Direct3D::GetFactory()->CreateSwapChain(Direct3D::GetDevice(), &scDesc, &pChain_);
+	hr = Direct3D::GetFactory()->CreateSwapChain(Direct3D::GetDevice(), &scDesc, &pChain_);
 	if (FAILED(hr))
 	{
 		MessageBox(nullptr, L"スワップチェイン作成失敗", L"エラー", MB_OK);
 	}
 	//バックバッファ取得
 	ID3D11Texture2D* pBackBuffer;
-	hr=pChain_->GetBuffer(0,__uuidof(ID3D11Texture2D),(LPVOID*)&pBackBuffer);
+	hr = pChain_->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
 	if (FAILED(hr))
 	{
 		MessageBox(nullptr, L"バックバッファ取得失敗", L"エラー", MB_OK);
 	}
 	//レンダーターゲットビュー作成
-	hr=Direct3D::GetDevice()->CreateRenderTargetView(pBackBuffer, NULL, &pRTV_);
+	hr = Direct3D::GetDevice()->CreateRenderTargetView(pBackBuffer, NULL, &pRTV_);
 	if (FAILED(hr))
 	{
 		MessageBox(nullptr, L"レンダーターゲットビュー作成失敗", L"エラー", MB_OK);
 	}
 	SAFE_RELEASE(pBackBuffer);
 	//ID3DBlob* csBlob;
-	hr=InitShader();
+	hr = InitShader();
 	if (FAILED(hr))
 	{
 		MessageBox(nullptr, L"シェーダーのコンパイル失敗", L"エラー", MB_OK);
@@ -102,27 +103,27 @@ void ColorChecker::Initialize(int screenWidth, int screenHeight, HWND hWnd)
 	texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	texDesc.MiscFlags = 0;
 	hr = Direct3D::GetDevice()->CreateTexture2D(&texDesc, nullptr, &pSampleImage_);
-	
+
 	////////////////////////シェーダーリソースビューデスク///////////////////
 	ZeroMemory(&smplSRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
 	smplSRVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	smplSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	smplSRVDesc.Texture2D.MostDetailedMip = 0;
 	smplSRVDesc.Texture2D.MipLevels = 1;
-	hr=Direct3D::GetDevice()->CreateShaderResourceView(pSampleImage_, &smplSRVDesc, &smplSRV_);
+	hr = Direct3D::GetDevice()->CreateShaderResourceView(pSampleImage_, &smplSRVDesc, &smplSRV_);
 
 	///////////////////////UAVバッファデスク//////////////////////////
-	
+
 	ZeroMemory(&UAVBufferDesc, sizeof(D3D11_BUFFER_DESC));
 	UAVBufferDesc.ByteWidth = sizeof(IMAGE_DATA) * imageWidth_ * imageHeight_;
 	UAVBufferDesc.Usage = D3D11_USAGE_DEFAULT;  //バッファの読み取る方法を指定
-												//これの場合GPUによる書き込みと読み込みを許可
+	//これの場合GPUによる書き込みと読み込みを許可
 	UAVBufferDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS |//UAVとシェーダーリソースの
-							  D3D11_BIND_SHADER_RESOURCE;  //バインドフラグを立てないとバッファ作成が失敗する
+		D3D11_BIND_SHADER_RESOURCE;  //バインドフラグを立てないとバッファ作成が失敗する
 	UAVBufferDesc.CPUAccessFlags = 0;//GPUからしかアクセスしないのでこれ
 	UAVBufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;//構造化されたバッファを作る場合これ
 	UAVBufferDesc.StructureByteStride = sizeof(IMAGE_DATA);//構造化バッファの要素のサイズ
-	hr=Direct3D::GetDevice()->CreateBuffer(&UAVBufferDesc, NULL, &pOutputBuffer_);
+	hr = Direct3D::GetDevice()->CreateBuffer(&UAVBufferDesc, NULL, &pOutputBuffer_);
 
 	//バッファの設定
 	D3D11_BUFFER_DESC bufDesc;
@@ -141,18 +142,18 @@ void ColorChecker::Initialize(int screenWidth, int screenHeight, HWND hWnd)
 	UAVDesc.Buffer.FirstElement = 0;
 	UAVDesc.Buffer.NumElements = imageWidth_ * imageHeight_;//データの要素数
 	UAVDesc.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_COUNTER;   //フォーマットによって変わる。
-															//詳しくはD3D_BUFFER_UAV_FLAGリファレンス参照
+	//詳しくはD3D_BUFFER_UAV_FLAGリファレンス参照
 	hr = Direct3D::GetDevice()->CreateUnorderedAccessView(pOutputBuffer_, &UAVDesc, &UAV_);
 
 	/////////////////////ビューポート作成///////////////////
-	
+
 	vp.Width = screenWidth;
 	vp.Height = screenHeight;
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
-	
+
 	////コンピュートシェーダ用コンスタントバッファにデータ入れる////
 	CONPUTE_C_BUFFER ccBuf;
 	ccBuf.dispatch = dispatch;
@@ -170,7 +171,7 @@ void ColorChecker::SetSampleBuffer(ID3D11Texture2D* buff)
 
 void ColorChecker::ShaderDispatch(int imageWidth, int imageHeight)
 {
-	Direct3D::GetContext()->Dispatch((float)dispatch.x,(float)dispatch.y,1);
+	Direct3D::GetContext()->Dispatch((float)dispatch.x, (float)dispatch.y, 1);
 }
 
 void ColorChecker::GetShaderResult(ID3D11Buffer* resultBuffer)
@@ -178,8 +179,18 @@ void ColorChecker::GetShaderResult(ID3D11Buffer* resultBuffer)
 
 }
 
-void ColorChecker::CalcPixel(ID3D11Texture2D* buff)	
+void ColorChecker::CreateUAV(ID3D11UnorderedAccessView* uav, ID3D11Buffer* buff)
 {
+
+}
+
+void ColorChecker::CreateSRV(ID3D11ShaderResourceView* srv, ID3D11Resource* rsource)
+{
+}
+
+void ColorChecker::CalcPixel(ID3D11Texture2D* buff)
+{
+	SAFE_RELEASE(pVertexBuffer_);
 	HRESULT hr;
 	ID3D11SamplerState* smplSampler;
 	D3D11_SAMPLER_DESC  SamDesc;
@@ -191,20 +202,14 @@ void ColorChecker::CalcPixel(ID3D11Texture2D* buff)
 	hr = Direct3D::pDevice->CreateSamplerState(&SamDesc, &smplSampler);
 
 	//レンダリング結果のシェーダーリソースビューを作成
-	ID3D11ShaderResourceView* smplSRV;
-	//シェーダーリソースビューの設定
-	D3D11_SHADER_RESOURCE_VIEW_DESC smplSRVDesc;
-	ZeroMemory(&smplSRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
-	smplSRVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	smplSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	smplSRVDesc.Texture2D.MostDetailedMip = 0;
-	smplSRVDesc.Texture2D.MipLevels = 1;
+
+
 	//受け取ったバッファをテクスチャ化
 	Direct3D::GetContext()->CopyResource(pSampleImage_, buff);
 	D3D11_MAPPED_SUBRESOURCE mappedTex;
 	Direct3D::GetContext()->Map(pSampleImage_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedTex);
 	UINT* screen = (UINT*)mappedTex.pData;
-	
+
 	for (int i = 0; i < imageWidth_; i++)
 	{
 		UINT row = i * mappedTex.RowPitch;
@@ -215,40 +220,41 @@ void ColorChecker::CalcPixel(ID3D11Texture2D* buff)
 			screen[row + col + 1] = 255;
 			screen[row + col + 2] = 255;
 			screen[row + col + 3] = 255;
-	
+
 		}
-	
+
 	}
-	
-	Direct3D::GetContext()->CopyResource(buff,pSampleImage_);
+
+	Direct3D::GetContext()->CopyResource(buff, pSampleImage_);
 	Direct3D::GetContext()->Unmap(pSampleImage_, 0);
 	//////////////////シェーダーに設定するところ///////////////////////
 
 	//シェーダーリソースビュー設定
-	Direct3D::GetContext()->CSSetShaderResources(0, 1, &smplSRV);
+	Direct3D::GetContext()->CSSetShaderResources(0, 1, &smplSRV_);
+	//サンプラー設定
 	Direct3D::GetContext()->CSSetSamplers(0, 1, &smplSampler);
 	//コンスタントバッファ設定
 	Direct3D::GetContext()->CSSetConstantBuffers(0, 1, &pConputeConstantBuffer_);
 	//作成したコンピュートシェーダを設定
 	Direct3D::GetContext()->CSSetShader(pComputeShader, nullptr, 0);
 	//UAVを設定
-	Direct3D::GetContext()->CSSetUnorderedAccessViews(0, 1, &UAV,0);
+	Direct3D::GetContext()->CSSetUnorderedAccessViews(0, 1, &UAV_, 0);
 	//実行
 	ShaderDispatch(imageWidth_, imageHeight_);
 
 	///////////シェーダーからのデータを受け取るところ
-	
+
 	Direct3D::GetContext()->CopyResource(outBuff_, pOutputBuffer_);
 
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
-	Direct3D::GetContext()->Map(outBuff, 0, D3D11_MAP_READ, 0, &mappedResource);
-	IMAGE_DATA* p = reinterpret_cast<IMAGE_DATA*>(mappedResource.pData);
+	Direct3D::GetContext()->Map(outBuff_, 0, D3D11_MAP_READ, 0, &mappedResource);
+	//IMAGE_DATA* p = reinterpret_cast<IMAGE_DATA*>(mappedResource.pData);
 	size_t dataSize = (size_t)(imageWidth_ * imageHeight_);
 	pPixelData_ = new IMAGE_DATA[dataSize];
-	memcpy_s(pPixelData_, sizeof(IMAGE_DATA) *dataSize, p, sizeof(IMAGE_DATA) * dataSize);
-	Direct3D::GetContext()->Unmap(outBuff, 0);
-	
+	memcpy_s(pPixelData_, sizeof(IMAGE_DATA) * dataSize, mappedResource.pData, mappedResource.RowPitch);
+	Direct3D::GetContext()->Unmap(outBuff_, 0);
+
 	D3D11_BUFFER_DESC vDesc;
 	vDesc.ByteWidth = sizeof(IMAGE_DATA) * dataSize;
 	vDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -260,22 +266,11 @@ void ColorChecker::CalcPixel(ID3D11Texture2D* buff)
 	D3D11_SUBRESOURCE_DATA vData;
 	vData.pSysMem = pPixelData_;
 
-	hr=Direct3D::GetDevice()->CreateBuffer(&vDesc, &vData, &pVertexBuffer_);
-	
+	hr = Direct3D::GetDevice()->CreateBuffer(&vDesc, &vData, &pVertexBuffer_);
+
 	SAFE_RELEASE(smplSampler);
-	SAFE_RELEASE(pTexture);
-	SAFE_RELEASE(smplSRV);
-	SAFE_RELEASE(pOutputBuffer);
-	SAFE_RELEASE(UAV);
-	SAFE_RELEASE(outBuff);	
-	SAFE_DELETE(smplSampler);
-	SAFE_DELETE(pTexture);
-	SAFE_DELETE(smplSRV);
-	SAFE_DELETE(pOutputBuffer);
-	SAFE_DELETE(UAV);
-	SAFE_DELETE(outBuff);
 }
-	
+
 
 HRESULT ColorChecker::InitComputeShader(LPCWSTR fileName, LPCSTR entryPoint, ID3D11Device* device, ID3DBlob** blob)
 {
@@ -288,7 +283,7 @@ HRESULT ColorChecker::InitComputeShader(LPCWSTR fileName, LPCSTR entryPoint, ID3
 	flag |= D3DCOMPILE_DEBUG;
 #endif // DEBUG
 
-	*blob = nullptr;
+	* blob = nullptr;
 	ID3DBlob* shaderBlob;
 	ID3DBlob* errorBlob;
 	LPCSTR profile;
@@ -301,19 +296,19 @@ HRESULT ColorChecker::InitComputeShader(LPCWSTR fileName, LPCSTR entryPoint, ID3
 		profile = "cs_4_0";
 	}
 
-	const D3D_SHADER_MACRO defines[] = { "EXAMPLE_DEFINE","1",NULL,NULL};
+	const D3D_SHADER_MACRO defines[] = { "EXAMPLE_DEFINE","1",NULL,NULL };
 	//シェーダーコンパイル
-	HRESULT hr=D3DCompileFromFile(fileName, 
-								  defines, 
-								  D3D_COMPILE_STANDARD_FILE_INCLUDE, 
-								  entryPoint,
-								  profile,
-								  flag, 
-								  0,
-								  &shaderBlob,
-								  &errorBlob);
+	HRESULT hr = D3DCompileFromFile(fileName,
+		defines,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		entryPoint,
+		profile,
+		flag,
+		0,
+		&shaderBlob,
+		&errorBlob);
 
-	
+
 	if (FAILED(hr))
 	{
 		if (errorBlob)
@@ -329,7 +324,7 @@ HRESULT ColorChecker::InitComputeShader(LPCWSTR fileName, LPCSTR entryPoint, ID3
 		return hr;
 	}
 	*blob = shaderBlob;
-	
+
 	return hr;
 }
 
@@ -517,35 +512,35 @@ HRESULT ColorChecker::InitShader()
 		return hr;
 
 	hr = Direct3D::GetDevice()->CreateComputeShader(csBlob->GetBufferPointer(),
-													csBlob->GetBufferSize(),
-													nullptr,
-													&pComputeShader);
+		csBlob->GetBufferSize(),
+		nullptr,
+		&pComputeShader);
 	hr = Direct3D::GetDevice()->CreateVertexShader(vsBlob->GetBufferPointer(),
-												   vsBlob->GetBufferSize(),
-												   nullptr,
-												   &pVertexShader_);
+		vsBlob->GetBufferSize(),
+		nullptr,
+		&pVertexShader_);
 	//hr = Direct3D::GetDevice()->CreateGeometryShader(gsBlob->GetBufferPointer(),
 	//												 gsBlob->GetBufferSize(),
 	//												 nullptr,
 	//												 &pGeometryShader_);
 	hr = Direct3D::GetDevice()->CreatePixelShader(psBlob->GetBufferPointer(),
-												  psBlob->GetBufferSize(),
-												  nullptr,
-												  &pPixelShader_);
+		psBlob->GetBufferSize(),
+		nullptr,
+		&pPixelShader_);
 	if (FAILED(hr))
 	{
 		MessageBox(nullptr, L"シェーダーの作成に失敗", L"エラー", MB_OK);
 		return hr;
 	}
 
-	D3D11_INPUT_ELEMENT_DESC layout[] = { 
+	D3D11_INPUT_ELEMENT_DESC layout[] = {
 			{ "POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 } };
 
 	hr = Direct3D::GetDevice()->CreateInputLayout(layout,
-												  sizeof(layout) / sizeof(D3D11_INPUT_ELEMENT_DESC),
-												  vsBlob->GetBufferPointer(),
-												  vsBlob->GetBufferSize(),
-												  &pLayout_);
+		sizeof(layout) / sizeof(D3D11_INPUT_ELEMENT_DESC),
+		vsBlob->GetBufferPointer(),
+		vsBlob->GetBufferSize(),
+		&pLayout_);
 	if (FAILED(hr))
 	{
 		MessageBox(nullptr, L"インプットレイアウトの作成に失敗", L"エラー", MB_OK);
@@ -578,11 +573,11 @@ void ColorChecker::Update()
 		transform.rotate_.y = rotate.x;
 	}
 
-	for (size_t i = 0; i < imageWidth_ * imageHeight_; i++)
-	{
-		XMFLOAT3 Col=pPixelData_[i].color;
-		int o = 0;
-	}
+	//for (size_t i = 0; i < imageWidth_ * imageHeight_; i++)
+	//{
+	//	XMFLOAT3 Col=pPixelData_[i].color;
+	//	int o = 0;
+	//}
 	SAFE_DELETE(pPixelData_);
 }
 
@@ -594,9 +589,9 @@ void ColorChecker::DrawStart()
 	//R += 0.01;
 	Direct3D::GetContext()->ClearRenderTargetView(pRTV_, clearColor);
 	Direct3D::GetContext()->ClearDepthStencilView(Direct3D::GetDepthStencilView(),
-												  D3D11_CLEAR_DEPTH,
-												  1.0f,
-												  0);
+		D3D11_CLEAR_DEPTH,
+		1.0f,
+		0);
 }
 
 void ColorChecker::Draw()
@@ -607,33 +602,33 @@ void ColorChecker::Draw()
 	Direct3D::GetContext()->IASetInputLayout(pLayout_);
 	Direct3D::GetContext()->RSSetState(pRasterizer_);
 
-	
 
 
-	
+
+
 	//行列
 	XMMATRIX matW = transform.GetLocalScaleMatrix() * Camera::GetBillBoardMatrix() * transform.GetWorldTranslateMatrix();
 	CONSTANT_BUFFER cBuffer;
 	cBuffer.matWVP = XMMatrixTranspose(transform.GetWorldMatrix() *
-									   Camera::GetViewMatrix() *
-									   Camera::GetProjectionMatrix());
+		Camera::GetViewMatrix() *
+		Camera::GetProjectionMatrix());
 
-	
+
 	D3D11_MAPPED_SUBRESOURCE subResource;
 	Direct3D::GetContext()->Map(pConstantBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &subResource);
 	memcpy_s(subResource.pData, subResource.RowPitch, (void*)(&cBuffer), sizeof(cBuffer));
 	Direct3D::GetContext()->Unmap(pConstantBuffer_, 0);
 	UINT stride = sizeof(IMAGE_DATA);
 	UINT offset = 0;
-	
+
 	ModelManager::SetTransform(hModel_, transform);
 	ModelManager::Draw(hModel_);
-	
+
 	Direct3D::GetContext()->IASetVertexBuffers(0, 1, &pVertexBuffer_, &stride, &offset);
 	Direct3D::GetContext()->VSSetConstantBuffers(0, 1, &pConstantBuffer_);
 	Direct3D::GetContext()->PSSetConstantBuffers(0, 1, &pConstantBuffer_);
 	//Direct3D::GetContext()->UpdateSubresource(pConstantBuffer_, 0, nullptr, &cBuffer, 0, 0);
-	
+
 	Direct3D::GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	Direct3D::GetContext()->Draw(imageWidth_ * imageHeight_, 0);
 	Direct3D::GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -641,9 +636,14 @@ void ColorChecker::Draw()
 
 void ColorChecker::DrawEnd()
 {
-	pChain_->Present(0,0);
+	pChain_->Present(0, 0);
 }
 
 void ColorChecker::Release()
 {
+	SAFE_RELEASE(pSampleImage_);
+	SAFE_RELEASE(smplSRV_);
+	SAFE_RELEASE(pOutputBuffer_);
+	SAFE_RELEASE(UAV_);
+	SAFE_RELEASE(outBuff_);
 }
