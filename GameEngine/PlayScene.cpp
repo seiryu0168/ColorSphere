@@ -8,7 +8,7 @@ PlayScene::PlayScene(GameObject * parent)
 	: SceneBase(parent, "PlayScene")
 {
 	//Instantiate<ObjectSetter>(this);
-	Instantiate<Box>(this);
+	//Instantiate<Box>(this);
 	//Instantiate<Water>(this);
 }
 

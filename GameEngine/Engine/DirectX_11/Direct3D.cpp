@@ -16,7 +16,6 @@ namespace Direct3D
 	ID3D11DepthStencilView* pDepthStencilView;									//深度ステンシルビュー
 	ID3D11BlendState* pBlendState[(int)BLEND_MODE::BLEND_MAX];					//ブレンドステート
 	ID3D11DepthStencilState* pDepthStencilState[(int)BLEND_MODE::BLEND_MAX];	//デプスステンシルステート
-	D3D11_VIEWPORT vp;
 
 	//オフスクリーン用の変数
 	ID3D11RenderTargetView* pOffScreenRTV;
@@ -146,6 +145,7 @@ HRESULT Direct3D::Initialize(int winW, int winH, HWND hWnd)
 
 	///////////////////////////ビューポート（描画範囲）設定///////////////////////////////
 	//レンダリング結果を表示する範囲
+	D3D11_VIEWPORT vp;
 	vp.Width = (float)winW;	//幅
 	vp.Height = (float)winH;//高さ
 	vp.MinDepth = 0.0f;	//手前
@@ -708,7 +708,6 @@ void Direct3D::SetDepthBufferWriteEnable(bool isWrite)
 void Direct3D::BeginDraw()
 {
 	pContext->OMSetRenderTargets(1, &pRenderTargetView, pDepthStencilView);        // 描画先を設定
-	pContext->RSSetViewports(1, &vp);
 	EngineTime::SetTime();
 	//画面をクリア
 		//背景色
