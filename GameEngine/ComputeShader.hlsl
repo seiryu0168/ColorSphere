@@ -2,24 +2,31 @@ int threadX = 16;
 int threadY = 16;
 int threadZ = 1;
 
+cbuffer cBuff
+{
+	float2 c_dispatch;
+	float2 c_uv:TEXCOORD;
+};
 //////////////////////コンピュートシェーダー/////////////////////////////////
 struct output
 {
 	float3 color;
 };
-Texture2D<float4> g_Texture : register(t0);
+Texture2D g_Texture : register(t0);
 SamplerState g_Sampler : register(s0);
 //output
 RWStructuredBuffer<output>outBuffer : register(u0);
 
-[numthreads(16,16,1)]
-void CS( uint2 DTid : SV_DispatchThreadID )
+[numthreads(1,1,1)]
+void CS( uint2 DTid : SV_DispatchThreadID,uint3 GTid : SV_GroupThreadID,uint3 Gid : SV_GroupID)
 {
-	float2 index;
-	index.x = DTid.x;
-	index.y = DTid.y;
-	float3 pixelColor = g_Texture[DTid].rgb;// float3(index.x, index.y, 10);
-	outBuffer[index.x].color = pixelColor;
+	float groupX = (1.0f / c_dispatch.x);
+	float groupY = (1.0f / c_dispatch.y);
+	float2 uv = c_uv;
+	uv.x += groupX * Gid.x + (groupX / 16) * GTid.x;
+	uv.y += groupY * Gid.y + (groupY / 16) * GTid.y;
+	float3 pixelColor = g_Texture[uv];// float3(index.x, index.y, 10);
+	outBuffer[DTid.x].color = pixelColor;
 	//outBuffer[index].r = pixelColor.x;
 	//outBuffer[index].g = pixelColor.y;
 	//outBuffer[index].b = pixelColor.z;

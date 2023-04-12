@@ -14,17 +14,29 @@ private:
 		XMMATRIX matWVP;
 		XMMATRIX matNormal;
 	};
+	struct CONPUTE_C_BUFFER
+	{
+		XMFLOAT2 dispatch;
+		XMFLOAT2 uv;
+	};
+		XMFLOAT2 dispatch;
+	
+	int hModel_;
 	int dispatchX_;
 	int dispatchY_;
 
 	int imageWidth_;
 	int imageHeight_;
+	float R;
 	Transform transform;
 
 	//シェーダー関連の変数
-	ID3D11Buffer* pSampleBuffer_;
-	ID3D11Buffer* pResultBuffer_;
-	ID3D11UnorderedAccessView* pResltUAV_;
+	ID3D11ShaderResourceView* smplSRV_;//シェーダーリソースビュー
+	ID3D11UnorderedAccessView* UAV_; //シェーダーからの出力を受け取る奴(UAV:UnorderedAccessView)
+	ID3D11Buffer* outBuff_;//UAVの情報を受け取る
+	ID3D11Buffer* pOutputBuffer_;//シェーダーからの出力を受け取る奴を用意するためのバッファ
+	ID3D11Buffer* pSampleBuffer_;//
+	ID3D11Buffer* pResultBuffer_;//
 
 	ID3D11ComputeShader* pComputeShader;
 	ID3D11VertexShader* pVertexShader_;
@@ -35,6 +47,7 @@ private:
 	
 	//シェーダーに入れる情報の変数
 	ID3D11Buffer* pConstantBuffer_;
+	ID3D11Buffer* pConputeConstantBuffer_;
 	ID3D11Buffer* pVertexBuffer_;
 	IMAGE_DATA* pPixelData_;
 
