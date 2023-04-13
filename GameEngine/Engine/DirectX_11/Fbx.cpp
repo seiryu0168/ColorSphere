@@ -40,6 +40,7 @@ HRESULT Fbx::Load(std::string fileName)
 	//ƒƒbƒVƒ…î•ñ‚ðŽæ“¾
 	FbxNode* rootNode = pFbxScene_->GetRootNode();
 	FbxNode* pNode = rootNode->GetChild(0);
+	assert(pNode != nullptr);
 	
 
 

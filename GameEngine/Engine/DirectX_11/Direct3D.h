@@ -17,6 +17,7 @@ enum class SHADER_TYPE
 	SHADER_EFF,
 	SHADER_OUTLINE,
 	SHADER_TOON,
+	SHADER_COLORSPHERE,
 	SHADER_MAX,
 };
 enum classTARGET
@@ -61,12 +62,15 @@ namespace Direct3D
 	HRESULT InitShaderEFF();
 	HRESULT InitShaderOutLine();
 	HRESULT InitShaderToon();
+	HRESULT InitShaderColoSphere();
+
 
 	void SetShader(SHADER_TYPE type);
 	void SetBlendMode(BLEND_MODE mode);
 	ID3D11Device* GetDevice();
 	ID3D11DeviceContext* GetContext();
 	IDXGISwapChain* GetSwapChain();
+	ID3D11RenderTargetView* GetRenderTargetView();
 	int GetScreenWidth();
 	int GetScreenHeight();
 	IDXGIFactory1* GetFactory();

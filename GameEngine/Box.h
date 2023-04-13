@@ -3,6 +3,7 @@
 class Box : public GameObject
 {
 private:
+	int hPict_;
 	int frame_;
 	//èdóÕ
 	float gravity_;
