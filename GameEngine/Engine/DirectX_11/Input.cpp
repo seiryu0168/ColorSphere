@@ -218,6 +218,11 @@ namespace Input
 		return mousePosition;
 	}
 
+	XMVECTOR GetMouseMove()
+	{
+		return XMVectorSet(mouseState.lX, mouseState.lY, 0, 0);
+	}
+
 	void SetMousePosition(int x, int y)
 	{
 		mousePosition = XMVectorSet((float)x, (float)y, 0, 0);

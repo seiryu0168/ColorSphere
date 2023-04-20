@@ -44,6 +44,7 @@ namespace Input
 	float GetRTriggerUp();
 
 	XMVECTOR GetMousePosition();
+	XMVECTOR GetMouseMove();
 	void SetMousePosition(int x, int y);
 	void Release();
 
