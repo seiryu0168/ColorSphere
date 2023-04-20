@@ -94,7 +94,7 @@ RWStructuredBuffer<output>outBuffer : register(u0);
 void CS(uint3 DTid : SV_DispatchThreadID,uint3 GTid : SV_GroupThreadID, uint3 Gid : SV_GroupID)
 {
 	int2 uv;
-	uv.x=c_dispatch*
+	//uv.x=c_dispatch*
 	float2 index;
 	index.x = DTid.x;
 	index.y = DTid.y;

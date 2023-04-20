@@ -881,18 +881,18 @@ void ColorChecker::Initialize(int screenWidth, int screenHeight, HWND hWnd)
 	vp_.TopLeftX = 0;
 	vp_.TopLeftY = 0;
 
-	CONPUTE_CONSTANT_BUFFER ccBuffer;
-	ccBuffer.threadGroup = { (float)imageWidth_ / (float)dispatchX_,
-							 (float)imageHeight_ / (float)dispatchY_ };
-
-	D3D11_MAPPED_SUBRESOURCE conputeResource;
-	Direct3D::GetContext()->Map(pConputeConstantBuffer_,
-								0,
-								D3D11_MAP_WRITE_DISCARD,
-								0,
-								&conputeResource);
-	memcpy_s(conputeResource.pData, conputeResource.RowPitch, (void*)&ccBuffer, sizeof(ccBuffer));
-	Direct3D::GetContext()->Unmap(pConputeConstantBuffer_, 0);
+	//CONPUTE_CONSTANT_BUFFER ccBuffer;
+	//ccBuffer.threadGroup = { (float)imageWidth_ / (float)dispatchX_,
+	//						 (float)imageHeight_ / (float)dispatchY_ };
+	//
+	//D3D11_MAPPED_SUBRESOURCE conputeResource;
+	//Direct3D::GetContext()->Map(pConputeConstantBuffer_,
+	//							0,
+	//							D3D11_MAP_WRITE_DISCARD,
+	//							0,
+	//							&conputeResource);
+	//memcpy_s(conputeResource.pData, conputeResource.RowPitch, (void*)&ccBuffer, sizeof(ccBuffer));
+	//Direct3D::GetContext()->Unmap(pConputeConstantBuffer_, 0);
 
 }
 
